@@ -6,12 +6,22 @@ public class FileInfo {
     private long fileSize;
     private String uploadedBy;
 
-    // Constructor
-    public FileInfo(String fileName, String filePath, long fileSize, String uploadedBy) {
-        this.fileName = fileName;
-        this.filePath = filePath;
-        this.fileSize = fileSize;
+    private String fileId; // שדה חדש
+
+    public FileInfo(String name, String path, long size, String uploadedBy,String fileId) {
+        this.fileName = name;
+        this.filePath = path;
+        this.fileSize = size;
         this.uploadedBy = uploadedBy;
+        this.fileId = fileId;
+    }
+
+    public String getFileId() {
+        return fileId;
+    }
+
+    public void setFileId(String fileId) {
+        this.fileId = fileId;
     }
 
     // Getters and Setters

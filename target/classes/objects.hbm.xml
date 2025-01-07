@@ -163,4 +163,22 @@
 
     </class>
 
+    <class name="com.ashcollege.entities.FileEntity" table="`files`" lazy="false">
+
+
+        <id name="id" type="int" column="id">
+            <generator class="identity"/>
+        </id>
+
+<property name="name" column="name" type="java.lang.String"/>
+<property name="url" column="url" type="java.lang.String"/>
+        <many-to-one name="userId" column="user_id"
+                     class="com.ashcollege.entities.UserEntity"/>
+        <many-to-one name="materialId" column="material_id"
+                     class="com.ashcollege.entities.MaterialEntity"/>
+
+    </class>
+
+
+
 </hibernate-mapping>

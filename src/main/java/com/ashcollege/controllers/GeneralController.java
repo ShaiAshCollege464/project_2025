@@ -11,6 +11,10 @@ import com.ashcollege.utils.Constants;
 import com.ashcollege.utils.GeneralUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 
+import org.springframework.core.io.FileSystemResource;
+import org.springframework.core.io.Resource;
+import org.springframework.http.HttpHeaders;
+import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 
@@ -361,6 +365,7 @@ private HashMap<String,UserEntity> tempUsers = new HashMap<>();
     @RequestMapping(value = "/get-material-files-by-id", method = RequestMethod.GET)
     public List<String> uploadFiles(int materialId,int userId) {
         try {
+            System.out.println(materialId);
             String materialFolderPath = getMaterialsFolder() + File.separator + materialId+ File.separator+userId;
             Path dirPath = Paths.get(materialFolderPath);
             if (!Files.exists(dirPath)) {
@@ -482,17 +487,37 @@ private HashMap<String,UserEntity> tempUsers = new HashMap<>();
                 } else {
                     // Extract uploadedBy based on user ID in the path
                     String uploadedBy = getUsernameFromPath(file.getAbsolutePath());
-
+                    String fileId = file.getName().split("_")[0];
                     fileInfoList.add(new FileInfo(
                             file.getName(),
                             file.getAbsolutePath(),
                             file.length(),
-                            uploadedBy
+                            uploadedBy,
+                            fileId
                     ));
                 }
             }
         }
     }
+
+    @RequestMapping(value = "/download-file", method = RequestMethod.GET)
+    public ResponseEntity<Resource> downloadFile(int id) {
+        FileEntity fileEntity = this.persist.loadObject(FileEntity.class,id);
+        Path filePathForDownload = Path.of(fileEntity.getUrl()+File.separator+fileEntity.getName());
+        System.out.println(filePathForDownload);
+        File file = filePathForDownload.toFile();
+
+        if (file.exists()) {
+            Resource resource = new FileSystemResource(file);
+            return ResponseEntity.ok()
+                    .header(HttpHeaders.CONTENT_DISPOSITION, "attachment; filename=" + file.getName())
+                    .header(HttpHeaders.CONTENT_TYPE, "application/octet-stream")
+                    .body(resource);
+        } else {
+            return null;
+        }
+    }
+
 
     private String getUsernameFromPath(String absolutePath) {
        absolutePath = absolutePath.replace("\\","%");
@@ -529,9 +554,13 @@ public void uploadFiles(@RequestParam(name = "file") MultipartFile[] files,Strin
                dir.mkdir();
                File dirUserId = new File(dir+ File.separator+userId);
                dirUserId.mkdir();
-               File fileToSave = new File(dirUserId+File.separator+ file.getOriginalFilename());
                MaterialEntity materialEntity = this.persist.getMaterialById(Integer.parseInt(materialId));
-               materialEntity.setUrl(getMaterialsFolder() + File.separator + materialId);
+               FileEntity fileEntity = new FileEntity(file.getName(),user,materialEntity,getMaterialsFolder()+File.separator+ materialId+File.separator+userId);
+               fileEntity.setName(fileEntity.getId()+"_"+file.getOriginalFilename());
+               this.persist.save(fileEntity);
+               File fileToSave = new File(dirUserId+File.separator+fileEntity.getId()+"_"+file.getOriginalFilename());
+               materialEntity.setUrl(getMaterialsFolder()+File.separator+ materialId);
+
                this.persist.save(materialEntity);
                file.transferTo(fileToSave);
            } catch (IOException e) {

@@ -4,7 +4,7 @@
     <modelVersion>4.0.0</modelVersion>
 
     <groupId>com.ashcollege</groupId>
-    <artifactId>ashcollege</artifactId>
+    <artifactId>aviyaServer</artifactId>
     <version>1.0</version>
     <packaging>jar</packaging>
 
