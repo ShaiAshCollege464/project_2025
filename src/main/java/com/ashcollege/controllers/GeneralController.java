@@ -509,8 +509,9 @@ private HashMap<String,UserEntity> tempUsers = new HashMap<>();
 
         if (file.exists()) {
             Resource resource = new FileSystemResource(file);
+            System.out.println(resource);
             return ResponseEntity.ok()
-                    .header(HttpHeaders.CONTENT_DISPOSITION, "attachment; filename=" + file.getName())
+                    .header(HttpHeaders.CONTENT_DISPOSITION, "attachment; filename=" + fileEntity.getName())
                     .header(HttpHeaders.CONTENT_TYPE, "application/octet-stream")
                     .body(resource);
         } else {
@@ -556,6 +557,7 @@ public void uploadFiles(@RequestParam(name = "file") MultipartFile[] files,Strin
                dirUserId.mkdir();
                MaterialEntity materialEntity = this.persist.getMaterialById(Integer.parseInt(materialId));
                FileEntity fileEntity = new FileEntity(file.getName(),user,materialEntity,getMaterialsFolder()+File.separator+ materialId+File.separator+userId);
+               this.persist.save(fileEntity);
                fileEntity.setName(fileEntity.getId()+"_"+file.getOriginalFilename());
                this.persist.save(fileEntity);
                File fileToSave = new File(dirUserId+File.separator+fileEntity.getId()+"_"+file.getOriginalFilename());
