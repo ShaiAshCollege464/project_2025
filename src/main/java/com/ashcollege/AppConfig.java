@@ -1,9 +1,11 @@
 package com.ashcollege;
 
 import com.mchange.v2.c3p0.ComboPooledDataSource;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.Profile;
+import org.springframework.core.env.Environment;
 import org.springframework.orm.hibernate5.HibernateTransactionManager;
 import org.springframework.orm.hibernate5.LocalSessionFactoryBean;
 import org.springframework.web.servlet.config.annotation.CorsRegistry;
@@ -23,21 +25,39 @@ import static com.ashcollege.utils.Constants.*;
 @Profile("production")
 public class AppConfig {
 
+    @Autowired
+    private Environment env;
 
     @Bean
     public DataSource dataSource() throws Exception {
-        String jdbcUrl = "jdbc:mysql://localhost:3306/?useSSL=false&allowPublicKeyRetrieval=true";
+        String dbUser = env.getProperty("DB_ROOT");
+        if (dbUser == null) {
+            dbUser = DB_USERNAME;
+        }
+        String dbPass = env.getProperty("DB_PASSWORD");
+        if (dbPass == null) {
+            dbPass = DB_PASSWORD;
+        }
+        String host = env.getProperty("DB_HOST");
+        if (host == null) {
+            host = DB_HOST;
+        }
+        Integer port = env.getProperty("DB_PORT", Integer.class);
+        if (port == null) {
+            port = DB_PORT;
+        }
         Class.forName("com.mysql.jdbc.Driver");
-        try (Connection connection = DriverManager.getConnection(jdbcUrl, DB_USERNAME, DB_PASSWORD);
+        String createSchemaUrl = "jdbc:mysql://" + host + ":" + port + "/?useSSL=false&allowPublicKeyRetrieval=true";
+        try (Connection connection = DriverManager.getConnection(createSchemaUrl, dbUser, dbPass);
              Statement statement = connection.createStatement()) {
             String createSchemaSQL = "CREATE SCHEMA IF NOT EXISTS " + SCHEMA;
             statement.executeUpdate(createSchemaSQL);
         }
         ComboPooledDataSource dataSource = new ComboPooledDataSource();
-        dataSource.setDriverClass("com.mysql.jdbc.Driver");
-        dataSource.setJdbcUrl("jdbc:mysql://localhost:3306/" + SCHEMA + "?useSSL=false&allowPublicKeyRetrieval=true");
-        dataSource.setUser(DB_USERNAME);
-        dataSource.setPassword(DB_PASSWORD);
+        dataSource.setDriverClass("com.mysql.cj.jdbc.Driver");
+        dataSource.setJdbcUrl("jdbc:mysql://" + host + ":" + port + "/" + SCHEMA  + "?useSSL=false&allowPublicKeyRetrieval=true");
+        dataSource.setUser(dbUser);
+        dataSource.setPassword(dbPass);
         dataSource.setMaxPoolSize(20);
         dataSource.setMinPoolSize(5);
         dataSource.setIdleConnectionTestPeriod(3600);
